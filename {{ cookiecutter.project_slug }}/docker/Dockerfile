@@ -1,5 +1,9 @@
-ARG BASE_CONTAINER=debian:stable-20200908-slim
-FROM $BASE_CONTAINER
+{%- if cookiecutter.use_nvidia_docker == 'yes' -%}
+FROM nvidia/11.1-base
+{%- else -%}
+FROM debian:stable-20200908-slim
+{%- endif %}
+
 LABEL author="anosillus"
 USER root
 
@@ -67,30 +71,10 @@ RUN mkdir -p /home/.jupyter && { \
     echo "c.NotebookApp.allow_root = True"; \
     echo "c.NotebookApp.ip = '0.0.0.0'"; \
     echo "c.NotebookApp.token = ''"; \
-    echo "c.JupyterLabTemplates.template_dirs = ['/home/templates']"; \
+    echo "c.JupyterLabTemplates.template_dirs = ['/home/templates/']"; \
     echo "c.JupyterLabTemplates.include_default = True"; \
+    echo "c.LatexConfig.latex_command = 'xetex'"; \
     } | tee /home/.jupyter/jupyter_notebook_config.py
-
-RUN conda install -c conda-forge jupyterlab jupyter-lsp nodejs python-language-server ipympl jupyterhub nbdime jupyterlab_templates ipywidgets && \
-    # conda install -c anaconda libxml2 ipykernel && \
-    jupyter labextension install nbdime-jupyterlab --no-build && \
-    jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build && \
-    jupyter labextension install @jupyterlab/latex --no-build && \
-    jupyter labextension install @krassowski/jupyterlab-lsp --no-build && \
-    jupyter labextension install @jupyterlab/toc --no-build && \
-    jupyter labextension install jupyter-matplotlib --no-build && \
-    jupyter labextension install @jupyterlab/hub-extension --no-build && \
-    jupyter labextension install jupyterlab_templates --no-build && \
-    jupyter lab build && \
-    jupyter serverextension enable --py jupyterlab_templates && \
-    conda clean -tipsy && \
-    jupyter lab clean && \
-    jlpm cache clean && \
-    npm cache clean --force && \
-    rm -rf /home/.cache/yarn && \
-    rm -rf $CONDA_DIR/share/jupyter/lab/staging && \
-    rm -rf /home/.node-gyp && \
-    rm -rf /home/.local
 
 # SHELL ["/bin/bash", "-c"]
 
@@ -99,47 +83,34 @@ RUN conda env create -f /tmp/environment.yaml && \
     conda clean --all -f -y && \
     npm cache clean --force && \
     rm -rf /home/.cache/yarn && \
-    echo "conda activate python38" >> /home/.bashrc
-    # export $ENV_NAME = eval(conda activate $(head -1 /tmp/environment.yaml | cut -d' ' -f2)) && \
+    echo "conda activate $(head -1 /tmp/environment.yml | cut -d' ' -f2)" >> ~/.bashrc && \
 
-ENV PATH=/opt/conda/envs/python38/bin:$PATH
+ENV PATH /opt/conda/envs/$(head -1 /tmp/environment.yml | cut -d' ' -f2)/bin:$PATH
 
 RUN apt-get update --fix-missing && \
-    apt-get install -y fish texlive-xetex fonts-ipafont fonts-ipaexfont fonts-noto-cjk && \
+    apt-get install -y fonts-ipafont fonts-ipaexfont fonts-noto-cjk && \
     rm -rf /var/lib/apt/lists/* && \
-    apt-get clean && \
-    mkdir -p /home/.config/fish && \
-    touch /home/.config/fish/fish.config && \
-    echo "source /opt/conda/etc/fish/conf.d/conda.fish" >> /home/.config/fish/fish.config && \
-    echo "conda activate python38" >> /home/.config/fish/fish.config
+    apt-get clean
 
 SHELL ["/bin/bash", "-c"]
 ENV BASH_ENV /home/.bashrc
-RUN conda install -n python38 notebook ipykernel && \
-    /opt/conda/envs/python38/bin/python -m ipykernel install --name python38 --display-name python38 && \
+RUN conda install -n $(head -1 /tmp/environment.yml | cut -d' ' -f2) notebook ipykernel && \
+    /opt/conda/envs/$(head -1 /tmp/environment.yml | cut -d' ' -f2)/bin/python -m ipykernel install --name  $(head -1 /tmp/environment.yaml | cut -d' ' -f2) --display-name  $(head -1 /tmp/environment.yaml | cut -d' ' -f2) && \
     conda clean --all -f -y && \
     npm cache clean --force && \
-    rm -rf ~/.cache/yarn && \
-    conda deactivate
-    # conda install -n python38 notebook ipykernel && \
-    # /opt/conda/envs/python38/bin/python -m ipykernel install --user --name python38 --display-name python38 && \
+    rm -rf ~/.cache/yarn
 
-RUN mkdir /home/playground && \
-    mkdir /home/data && \
-    mkdir /home/src && \
+RUN mkdir /home/data && \
     mkdir /home/models && \
-    mkdir /home/reports && \
     mkdir /home/references && \
-    mkdir /home/templates
+    mkdir /home/reports && \
+    mkdir /home/src
 
-VOLUME /home/playground
-VOLUME /home/templates
 VOLUME /home/data
-VOLUME /home/src
 VOLUME /home/models
-VOLUME /home/reports
 VOLUME /home/references
+VOLUME /home/reports
+VOLUME /home/src
 
 EXPOSE 8888
 ENTRYPOINT [ "/usr/bin/tini", "--" ]
-# CMD ["/bin/bash/", "cd", "$HOME", ";", "jupyter" ,"lab", "--no-browser"]

@@ -2,8 +2,8 @@ version: "3"
 services:
   jupyter:
     build:
-      context: ./docker/Dockerfile.base
-    image: "{{ cookiecutter.project_slug }}"
+      context: ./docker
+    image: { { cookiecutter.project_slug } }
     volumes:
       - ./playground:/home/playground
       - ./data:/home/data
