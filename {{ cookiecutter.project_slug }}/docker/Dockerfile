@@ -99,14 +99,14 @@ RUN conda install -c conda-forge jupyterlab jupyterlab-git jupyter-lsp nodejs py
     rm -rf /home/.node-gyp && \
     rm -rf /home/.local
 
-COPY ./environment.yaml /tmp/environment.yaml
-RUN conda env create -f /tmp/environment.yaml && \
+COPY ./environment_base.yaml /tmp/environment_base.yaml
+RUN conda env create -f /tmp/environment_base.yaml && \
     conda clean --all -f -y && \
     npm cache clean --force && \
     rm -rf /home/.cache/yarn && \
-    echo "conda activate $(head -1 /tmp/environment.yaml | cut -d' ' -f2 | tr -d '\r')" >> ~/.bashrc
+    echo "conda activate $(head -1 /tmp/environment_base.yaml | cut -d' ' -f2 | tr -d '\r')" >> ~/.bashrc
 
-ENV PATH /opt/conda/envs/$(head -1 /tmp/environment.yaml | cut -d' ' -f2 | tr -d '\r')/bin:$PATH
+ENV PATH /opt/conda/envs/$(head -1 /tmp/environment_base.yaml | cut -d' ' -f2 | tr -d '\r')/bin:$PATH
 
 RUN apt-get update --fix-missing && \
     apt-get install -y fish texlive-xetex fonts-ipafont fonts-ipaexfont fonts-noto-cjk && \
@@ -115,12 +115,12 @@ RUN apt-get update --fix-missing && \
     mkdir -p /home/.config/fish && \
     touch /home/.config/fish/fish.config && \
     echo "source /opt/conda/etc/fish/conf.d/conda.fish" >> /home/.config/fish/fish.config && \
-    echo "conda activate $(head -1 /tmp/environment.yaml | cut -d' ' -f2 | tr -d '\r')" >> /home/.config/fish/fish.config
+    echo "conda activate $(head -1 /tmp/environment_base.yaml | cut -d' ' -f2 | tr -d '\r')" >> /home/.config/fish/fish.config
 
 SHELL ["/bin/bash", "-c"]
 ENV BASH_ENV /home/.bashrc
-RUN conda install -n $(head -1 /tmp/environment.yaml | cut -d' ' -f2 | tr -d '\r') notebook ipykernel
-RUN /opt/conda/envs/$(head -1 /tmp/environment.yaml | cut -d' ' -f2 | tr -d '\r')/bin/python -m ipykernel install --name  $(head -1 /tmp/environment.yaml | cut -d' ' -f2 | tr -d '\r') --display-name  $(head -1 /tmp/environment.yaml | cut -d' ' -f2 | tr -d '\r') && \
+RUN conda install -n $(head -1 /tmp/environment_base.yaml | cut -d' ' -f2 | tr -d '\r') notebook ipykernel
+RUN /opt/conda/envs/$(head -1 /tmp/environment_base.yaml | cut -d' ' -f2 | tr -d '\r')/bin/python -m ipykernel install --name  $(head -1 /tmp/environment_base.yaml | cut -d' ' -f2 | tr -d '\r') --display-name  $(head -1 /tmp/environment_base.yaml | cut -d' ' -f2 | tr -d '\r') && \
     conda clean --all -f -y && \
     npm cache clean --force && \
     rm -rf ~/.cache/yarn
