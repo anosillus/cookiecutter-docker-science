@@ -1,8 +1,20 @@
 FROM {{cookiecutter.project_slug}}-image-base
 
-COPY ./requirements_dev.txt /requirements_dev.txt
-RUN pip install -r /requirements_dev.txt
+COPY ./environment_dev.yaml /environment_dev.yaml
 
-WORKDIR /work
+COPY ./environment_dev.yaml /tmp/environment_dev.yaml
+RUN conda env create -f /tmp/environment_dev.yaml && \
+    conda clean --all -f -y && \
+    npm cache clean --force && \
+    rm -rf /home/.cache/yarn && \
+    echo "conda activate $(head -1 /tmp/environment_dev.yml | cut -d' ' -f2)" >> ~/.bashrc && \
 
-ENTRYPOINT ["/bin/bash"]
+SHELL ["/bin/bash", "-c"]
+ENV BASH_ENV /home/.bashrc
+RUN conda install -n $(head -1 /tmp/environment_dev.yml | cut -d' ' -f2) notebook ipykernel && \
+    /opt/conda/envs/$(head -1 /tmp/environment_dev.yml | cut -d' ' -f2)/bin/python -m ipykernel install --name  $(head -1 /tmp/environment_dev.yaml | cut -d' ' -f2) --display-name  $(head -1 /tmp/environment_dev.yaml | cut -d' ' -f2) && \
+    conda clean --all -f -y && \
+    npm cache clean --force && \
+    rm -rf ~/.cache/yarn && \
+
+ENTRYPOINT [ "/usr/bin/tini", "--" ]

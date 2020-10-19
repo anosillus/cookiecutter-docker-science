@@ -1,0 +1,45 @@
+name: python38
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - autopep8
+  - black
+  - bokeh
+  - category_encoders
+  - cython
+  - feather-format
+  - flake8
+  - flake8-import-order
+  - graphviz
+  - imbalanced-learn
+  - isort
+  - lightgbm
+  - matplotlib
+  - missingno
+  - nbdime
+  - networkx
+  - numba
+  - numpy
+  - pandas
+  - pathlib2
+  - pep8
+  - pip=20.*
+  - python-graphviz
+  - python=3.8.*
+  - requests
+  - rpy2
+  - scikit-learn
+  - scipy
+  - seaborn
+  - statsmodels
+  - tqdm
+  - watermark
+  - pip:
+      - causalml
+      - lxml
+      - iplantuml
+      - japanize_matplotlib
+      - kaggle-cli
+      - optuna
+prefix: /opt/conda/envs/python38

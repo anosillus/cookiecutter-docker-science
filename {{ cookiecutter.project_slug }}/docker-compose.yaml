@@ -1,0 +1,16 @@
+version: "3"
+services:
+  jupyter:
+    build:
+      context: ./docker/Dockerfile.base
+    image: "{{ cookiecutter.project_slug }}"
+    volumes:
+      - ./playground:/home/playground
+      - ./data:/home/data
+      - ./src:/home/src
+      - ./models:/home/models
+      - ./reports:/home/reports
+      - ./references:/home/references
+    ports:
+      - 10000:8888
+    command: "jupyter lab"
