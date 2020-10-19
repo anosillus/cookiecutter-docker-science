@@ -76,41 +76,70 @@ RUN mkdir -p /home/.jupyter && { \
     echo "c.LatexConfig.latex_command = 'xetex'"; \
     } | tee /home/.jupyter/jupyter_notebook_config.py
 
-# SHELL ["/bin/bash", "-c"]
+RUN conda install -c conda-forge jupyterlab jupyterlab-git jupyter-lsp nodejs python-language-server ipympl jupyterhub nbdime jupyterlab_templates ipywidgets && \
+    # conda install -c anaconda libxml2 ipykernel && \
+    jupyter labextension install nbdime-jupyterlab --no-build && \
+    jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build && \
+    jupyter labextension install @jupyterlab/latex --no-build && \
+    jupyter labextension install @krassowski/jupyterlab-lsp --no-build && \
+    jupyter labextension install @jupyterlab/toc --no-build && \
+    jupyter labextension install jupyter-matplotlib --no-build && \
+    jupyter labextension install @jupyterlab/hub-extension --no-build && \
+    jupyter labextension install jupyterlab_templates --no-build && \
+    jupyter labextension install @jupyterlab/git --no-build && \
+    jupyter lab build && \
+    jupyter serverextension enable --py jupyterlab_templates && \
+    jupyter serverextension enable --py jupyterlab_git && \
+    conda clean -tipsy && \
+    jupyter lab clean && \
+    jlpm cache clean && \
+    npm cache clean --force && \
+    rm -rf /home/.cache/yarn && \
+    rm -rf $CONDA_DIR/share/jupyter/lab/staging && \
+    rm -rf /home/.node-gyp && \
+    rm -rf /home/.local
 
 COPY ./environment.yaml /tmp/environment.yaml
 RUN conda env create -f /tmp/environment.yaml && \
     conda clean --all -f -y && \
     npm cache clean --force && \
     rm -rf /home/.cache/yarn && \
-    echo "conda activate $(head -1 /tmp/environment.yml | cut -d' ' -f2)" >> ~/.bashrc && \
+    echo "conda activate $(head -1 /tmp/environment.yaml | cut -d' ' -f2)" >> ~/.bashrc
 
-ENV PATH /opt/conda/envs/$(head -1 /tmp/environment.yml | cut -d' ' -f2)/bin:$PATH
+ENV PATH /opt/conda/envs/$(head -1 /tmp/environment.yaml | cut -d' ' -f2)/bin:$PATH
 
 RUN apt-get update --fix-missing && \
-    apt-get install -y fonts-ipafont fonts-ipaexfont fonts-noto-cjk && \
+    apt-get install -y fish texlive-xetex fonts-ipafont fonts-ipaexfont fonts-noto-cjk && \
     rm -rf /var/lib/apt/lists/* && \
-    apt-get clean
+    apt-get clean && \
+    mkdir -p /home/.config/fish && \
+    touch /home/.config/fish/fish.config && \
+    echo "source /opt/conda/etc/fish/conf.d/conda.fish" >> /home/.config/fish/fish.config && \
+    echo "conda activate $(head -1 /tmp/environment.yaml | cut -d' ' -f2)" >> /home/.config/fish/fish.config
 
 SHELL ["/bin/bash", "-c"]
 ENV BASH_ENV /home/.bashrc
-RUN conda install -n $(head -1 /tmp/environment.yml | cut -d' ' -f2) notebook ipykernel && \
-    /opt/conda/envs/$(head -1 /tmp/environment.yml | cut -d' ' -f2)/bin/python -m ipykernel install --name  $(head -1 /tmp/environment.yaml | cut -d' ' -f2) --display-name  $(head -1 /tmp/environment.yaml | cut -d' ' -f2) && \
+RUN conda install -n $(head -1 /tmp/environment.yaml | cut -d' ' -f2) notebook ipykernel && \
+    /opt/conda/envs/$(head -1 /tmp/environment.yaml | cut -d' ' -f2)/bin/python -m ipykernel install --name  $(head -1 /tmp/environment.yaml | cut -d' ' -f2) --display-name  $(head -1 /tmp/environment.yaml | cut -d' ' -f2) && \
     conda clean --all -f -y && \
     npm cache clean --force && \
     rm -rf ~/.cache/yarn
 
-RUN mkdir /home/data && \
+RUN mkdir /home/playground && \
+    mkdir /home/data && \
+    mkdir /home/src && \
     mkdir /home/models && \
-    mkdir /home/references && \
     mkdir /home/reports && \
-    mkdir /home/src
+    mkdir /home/references && \
+    mkdir /home/templates
 
+VOLUME /home/playground
+VOLUME /home/templates
 VOLUME /home/data
-VOLUME /home/models
-VOLUME /home/references
-VOLUME /home/reports
 VOLUME /home/src
+VOLUME /home/models
+VOLUME /home/reports
+VOLUME /home/references
 
 EXPOSE 8888
 ENTRYPOINT [ "/usr/bin/tini", "--" ]

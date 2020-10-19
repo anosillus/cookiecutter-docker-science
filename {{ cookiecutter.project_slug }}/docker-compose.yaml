@@ -3,7 +3,7 @@ services:
   jupyter:
     build:
       context: ./docker
-    image: { { cookiecutter.project_slug } }
+    image: "{{ cookiecutter.project_slug }}"
     volumes:
       - ./playground:/home/playground
       - ./data:/home/data
@@ -12,5 +12,5 @@ services:
       - ./reports:/home/reports
       - ./references:/home/references
     ports:
-      - 10000:8888
+      - "{{ cookiecutter.jupyter_host_port }}":8888
     command: "jupyter lab"
